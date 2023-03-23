@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>co.broadside</groupId>
+    <artifactId>keycloak-broadside-spi</artifactId>
+    <version>1.0.1</version>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.release>11</maven.compiler.release>
+        <version.org.keycloak>20.0.3</version.org.keycloak>
+        <version.org.jboss.logging>3.4.1.Final</version.org.jboss.logging>
+    </properties>
+
+
+    <build>
+        <plugins>
+            <plugin>
+                 <groupId>org.apache.maven.plugins</groupId>
+                 <artifactId>maven-compiler-plugin</artifactId>
+                 <version>3.8.0</version>
+                 <configuration>
+                     <release>11</release>
+                 </configuration>
+            </plugin>
+
+           <!-- <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.3.0</version>
+                <configuration>
+                    <descriptors>
+                        <descriptor>src/assembly/assemblyModule.xml</descriptor>
+                    </descriptors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>-->
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-server-spi</artifactId>
+            <version>${version.org.keycloak}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-server-spi-private</artifactId>
+            <version>${version.org.keycloak}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-core</artifactId>
+            <version>${version.org.keycloak}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.logging</groupId>
+            <artifactId>jboss-logging</artifactId>
+            <version>${version.org.jboss.logging}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+			<groupId>org.keycloak</groupId>
+			<artifactId>keycloak-services</artifactId>
+			<version>${version.org.keycloak}</version>
+		</dependency>
+		<dependency>
+		    <groupId>com.github.seancfoley</groupId>
+		    <artifactId>ipaddress</artifactId>
+		    <version>5.3.3</version>
+		</dependency>
+		<dependency>
+	        <groupId>com.maxmind.geoip2</groupId>
+	        <artifactId>geoip2</artifactId>
+	        <version>4.0.1</version>
+	    </dependency>
+    </dependencies>
+
+
+</project>
