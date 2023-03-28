@@ -7,8 +7,27 @@ package co.broadside;
  */
 public class Constants {
 
-	public static final String ipValidationRole="IPWhiteListRole";
-	public static final String ipWhitelistAttrib="ValidIpWhitelist";
-	public static final String ipGeoLocationAttrib="ValidISOGeoLocation";
+	private Constants() {
+	}
+	
+	/**
+	 * Role to be referred to Client Level attributes for IP Validation
+	 */
+	public static final String ROLE_IP_VALIDATION="IPWhiteListRole";
+	
+	/**
+	 * Attribute name for IP Whitelist. This attribute name will be searched for in Keycloak Configuration at User or Client level
+	 */
+	public static final String ATTRIB_IP_WHITELIST="ValidIpWhitelist";
+	
+	/**
+	 * Attribute name for Valid ISO Geo Location. This attribute name will be searched for in Keycloak Configuration at User or Client level
+	 */
+	public static final String ATTRIB_IP_GEO_LOC="ValidISOGeoLocation";
+	
+	/**
+	 * Attribute name for Mobile number for SMS OTP.  This attribute name will be searched for in Keycloak Configuration at User level
+	 */
+	public static final String ATTRIB_MOB_NUM="MobileNumber";
 	
 }

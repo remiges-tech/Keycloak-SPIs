@@ -137,13 +137,13 @@ public class ClientIPValidator implements Authenticator {
 			 * 2. Get allowed Geo location for user from config
 			 */
 			String allowedGeoLocation="";
-			String allowedCountry = user.getFirstAttribute(Constants.ipGeoLocationAttrib);
+			String allowedCountry = user.getFirstAttribute(Constants.ATTRIB_IP_GEO_LOC);
 			
 			if(allowedCountry==null || allowedCountry.isBlank()) {
 				LOG.info("User level Geo Location is not set. Checking Client level Geo Location");
 				String clientLevelGeoLocation="";
 				try {
-					clientLevelGeoLocation=getClientLevelAttribute(context,Constants.ipValidationRole,Constants.ipGeoLocationAttrib);
+					clientLevelGeoLocation=getClientLevelAttribute(context,Constants.ROLE_IP_VALIDATION,Constants.ATTRIB_IP_GEO_LOC);
 				}catch (Exception e) {
 					LOG.error("Exception while reading client level Geo Location : "+e.getLocalizedMessage());
 				}
@@ -214,7 +214,7 @@ public class ClientIPValidator implements Authenticator {
 		 */
 		String ipWhiteList="";
 		String userLevelIPWhitelist="";
-		userLevelIPWhitelist = user.getFirstAttribute(Constants.ipWhitelistAttrib);
+		userLevelIPWhitelist = user.getFirstAttribute(Constants.ATTRIB_IP_WHITELIST);
 		if (userLevelIPWhitelist==null || userLevelIPWhitelist.isBlank()) {
 			/*
 			 * If User level whitelist is not set, then we need to check Client level whitelist
@@ -222,7 +222,7 @@ public class ClientIPValidator implements Authenticator {
 			LOG.info("User level IP whitelist is not set. Checking Client level whitelist");
 			String clientLevelIPWhitelist = "";
 			try {
-				clientLevelIPWhitelist = getClientLevelAttribute(context,Constants.ipValidationRole,Constants.ipWhitelistAttrib);
+				clientLevelIPWhitelist = getClientLevelAttribute(context,Constants.ROLE_IP_VALIDATION,Constants.ATTRIB_IP_WHITELIST);
 			} catch (Exception e) {
 				LOG.error("Exception while reading client level IP Whitelist : "+e.getLocalizedMessage());
 			}

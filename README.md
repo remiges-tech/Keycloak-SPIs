@@ -5,7 +5,7 @@ Standard Keycloak configuration does not allow for SMS based OTP or IP level val
 This SPI manages to add this feature to Keycloak in a configurable manner.
 
 ## Use-Case
-1. IP based validation [can be set at Client Level & User Level]: 
+1. IP based validation (can be set at Client Level & User Level): 
     - Whitelist of Range of IP or List of IP is defined in the attributes against which the user IP is validated. 
     - GeoIP Validation : A User can be based on a single Geo Located Country(for e.g. IN). 
 
@@ -41,7 +41,7 @@ The new SPI fits in the registration flow of keycloaks registration.
 **[A] IP/IP RANGE VALIDATION : Whitelist of Range of IP or List of IP is defined in the attributes against which the user IP is validated.**
 
 Following properties are to be set in Keycloak for this to work: 
-  1. __Authentication Flow level__  [Enable/Disable IP Validation]:
+  1. __Authentication Flow level__  (Enable/Disable IP Validation):
      1. Login to Keycloak Admin Portal
      2. Select relevant Realm
      3. Under "Configure" section on Left Sidebar, select "Authentication" 
@@ -52,8 +52,8 @@ Following properties are to be set in Keycloak for this to work:
           - click on "Add Step" at relevant position in the flow, 
           - Search for "IP Validator" and Click Add. 
           - Go to setting besides "IP Validator" and add any alias and Enable/Disable 'IP Validation'
-   <br>
-  2. __At Client Level__  [Valid IP Range]: 
+          
+  2. __At Client Level__  (Valid IP Range): 
      1. Login to Keycloak Admin portal.
      2. Select relevant Realm 
      3. Under "Manage" section on the Left sidebar, select "Client"
@@ -62,21 +62,21 @@ Following properties are to be set in Keycloak for this to work:
      6. If role "IPWhiteListRole" is not present, then add it, else select the role.
      7. In attributes for the Role, add the attribute "ValidIpWhitelist" along with value as the whitelist.
      8. Click on Save.
-   <br>
-  3. __At User Level__  [Valid IP Range]: 
+     
+  3. __At User Level__  (Valid IP Range): 
      1. Login to Keycloak Admin Portal 
      2. Select relevant Realm 
      3. Under "Manage" section on the Left sidebar, select "Users" 
      4. Click on the user where you want to add IP Validation
      5. Click on "Attributes"
      6. Add the attribute key as "ValidIpWhitelist" and Value as IP range CSV e.g. "127.0.0.1-127.0.0.3,127.0.0.5,192.168.0.220-192.168.0.224" [without quotes]
-     7. Click on Save and test
+     7. Click on Save and test.
      
      
  **[B] GEO LOCATION VALIDATION : IP is validated against Geo Location of IP using maxmind's geoIP2Lite DB**
  
  Following properties are to be set in Keycloak for this to work:
- 1. __Authentication Flow level__  [Enable/Disable Geo Location based IP Validation]: 
+ 1. __Authentication Flow level__  (Enable/Disable Geo Location based IP Validation): 
     1. Login to Keycloak Admin Portal
    	2. Select relevant Realm
     3. Under "Configure" section on Left Sidebar, select "Authentication"
@@ -86,9 +86,9 @@ Following properties are to be set in Keycloak for this to work:
     6. If step "IP Validator" is not present, 
         - click on "Add Step" at relevant position in the flow,
         - Search for "IP Validator" and Click Add.
-        - Go to setting besides "IP Validator" and add any alias and Enable/Disable 'Geo IP Validation'
-        <br>
-  2. __At Client Level__  [Valid Geo Location]:
+        - Go to setting besides "IP Validator" and add any alias and Enable/Disable 'Geo IP Validation'.
+        
+  2. __At Client Level__  (Valid Geo Location):
      1. Login to Keycloak Admin portal.
      2. Select relevant Realm 
      3. Under "Manage" section on the Left sidebar, select "Client"
@@ -97,13 +97,13 @@ Following properties are to be set in Keycloak for this to work:
      6. If role "ValidISOGeoLocation" is not present, then add it, else select the role.
      7. In attributes for the Role, add the attribute "ValidISOGeoLocation" along with valid ISO Geo location e.g. "IN".
      8. Click on Save.
-        <br>
- 2. __At User Level__  [Valid Geo Location]:
+     
+ 2. __At User Level__  (Valid Geo Location):
      1. Login to Keycloak Admin Portal
      2. Select relevant Realm
      3. Under "Manage" section on the Left sidebar, select "Users" 
      4. Click on the user where you want to add IP Validation
      5. Click on "Attributes"
      6. Add the attribute key as "ValidISOGeoLocation" and Value as ISO Country code e.g. "IN" [without quotes]
-     7. Click on Save and test
+     7. Click on Save and test.
      	

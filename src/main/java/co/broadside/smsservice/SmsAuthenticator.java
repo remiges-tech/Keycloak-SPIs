@@ -17,6 +17,7 @@ import org.keycloak.models.UserModel;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.theme.Theme;
 
+import co.broadside.Constants;
 import co.broadside.smsservice.smsgateway.SmsServiceFactory;
 
 /**
@@ -35,12 +36,12 @@ public class SmsAuthenticator implements Authenticator{
 		KeycloakSession session = context.getSession();
 		UserModel user = context.getUser();
 		
-		String mobileNumber = user.getFirstAttribute("MobileNumber");
+		String mobileNumber = user.getFirstAttribute(Constants.ATTRIB_MOB_NUM);
 		//TODO : Mobile No validation required?
 		if(mobileNumber==null) {
 			String errorString = String.format(
-					"'MobileNumber' attribute for the user <%s>, email <%s> is blank or not present. Please set it.",
-					user.getUsername(), user.getEmail());
+					"'%s' attribute for the user <%s>, email <%s> is blank or not present. Please set it.",
+					Constants.ATTRIB_MOB_NUM,user.getUsername(), user.getEmail());
 			LOG.error(errorString);
 
 			context.failureChallenge(AuthenticationFlowError.INTERNAL_ERROR,
