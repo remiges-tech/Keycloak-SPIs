@@ -7,10 +7,24 @@ import inet.ipaddr.IPAddress;
 import inet.ipaddr.IPAddressSeqRange;
 import inet.ipaddr.IPAddressString;
 
+/**
+ * This utility class checks an IP to be present in the range of IP address passed.
+ * @author bhavyag
+ *
+ */
 public class IpRangeCheckUtil {
 	
 	private static final Logger LOG = Logger.getLogger(IpRangeCheckUtil.class);
 
+	private IpRangeCheckUtil() {
+	}
+	
+	/**
+	 * This method checks IP against a range of IP passed.
+	 * @param validIpList : IP range against which the IP is to be checked
+	 * @param ipToBeValidated : IP which needs to be validated agains the range.
+	 * @return true if IP is within range else false. 
+	 */
 	public static boolean checkIP(String validIpList, String ipToBeValidated) {
 		boolean isValid=false;
 		if(ipToBeValidated==null) {

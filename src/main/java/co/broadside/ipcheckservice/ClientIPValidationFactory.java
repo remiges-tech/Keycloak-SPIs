@@ -10,6 +10,11 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.provider.ProviderConfigProperty;
 
+/**
+ * Client IP Validation Factory which implements Keycloak Authentication Factory.
+ * This is used for IP validation SPI
+ * @author bhavyag
+ */
 public class ClientIPValidationFactory implements AuthenticatorFactory {
 
 	public static final String PROVIDER_ID = "ip-validator";

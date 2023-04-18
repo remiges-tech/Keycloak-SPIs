@@ -8,6 +8,9 @@ public class SmsServiceFactory {
 
 	private static final Logger LOG = Logger.getLogger(SmsServiceFactory.class);
 
+	private SmsServiceFactory() {		
+	}
+	
 	public static ISmsService get(Map<String, String> config) {
 		if (Boolean.parseBoolean(config.getOrDefault("simulation", "false"))) {
 			return (phoneNumber, message) ->

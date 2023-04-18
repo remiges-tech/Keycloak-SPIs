@@ -1,9 +1,8 @@
 package co.broadside;
 
 /**
- * Broadside Keycloak Constants
+ * Keycloak SPI Constants
  * @author bhavyag
- *
  */
 public class Constants {
 

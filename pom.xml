@@ -25,7 +25,6 @@
                      <release>11</release>
                  </configuration>
             </plugin>
-
            <!-- <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.3.0</version>
@@ -74,6 +73,12 @@
 			<artifactId>keycloak-services</artifactId>
 			<version>${version.org.keycloak}</version>
 		</dependency>
+		 <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-model-jpa</artifactId>
+            <version>${version.org.keycloak}</version>
+            <scope>provided</scope>
+        </dependency>
 		<dependency>
 		    <groupId>com.github.seancfoley</groupId>
 		    <artifactId>ipaddress</artifactId>
@@ -84,6 +89,16 @@
 	        <artifactId>geoip2</artifactId>
 	        <version>4.0.1</version>
 	    </dependency>
+		<dependency>
+		    <groupId>javax.persistence</groupId>
+		    <artifactId>javax.persistence-api</artifactId>
+		    <version>2.2</version>
+		</dependency>
+		<dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.26</version>
+        </dependency>
     </dependencies>
 
 
