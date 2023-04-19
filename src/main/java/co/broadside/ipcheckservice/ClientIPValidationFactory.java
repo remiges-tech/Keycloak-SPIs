@@ -17,7 +17,7 @@ import org.keycloak.provider.ProviderConfigProperty;
  */
 public class ClientIPValidationFactory implements AuthenticatorFactory {
 
-	public static final String PROVIDER_ID = "ip-validator";
+	private static final String PROVIDER_ID = "ip-validator";
 	@Override
 	public String getId() {
 		return PROVIDER_ID;

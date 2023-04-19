@@ -10,11 +10,15 @@ import javax.persistence.TypedQuery;
  */
 public class KcUserRepository {
 
-	static KcUserRepository kcUserRepository;
+	private static KcUserRepository kcUserRepository;
 
 	private KcUserRepository() {
 	}
 
+	/**
+	 * Singleton method to get KcUserRepository instance
+	 * @return
+	 */
 	public static synchronized KcUserRepository getKcUserRepository() {
 		if(kcUserRepository==null){
 			kcUserRepository=new KcUserRepository();
@@ -44,6 +48,12 @@ public class KcUserRepository {
 		return query.getSingleResult();
 	}
 
+	/**
+	 * Method to find user by username or email id
+	 * @param em : javax.persistence.EntityManager instance
+	 * @param username : username to be searched
+	 * @return KcUser object if found
+	 */
 	public KcUser findUserByUsernameOrEmail(EntityManager em, String username) {
 		TypedQuery<KcUser> query = em.createNamedQuery("getUserByUsername", KcUser.class);
 		query.setParameter("username", username);

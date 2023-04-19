@@ -11,7 +11,7 @@ import org.keycloak.storage.UserStorageProviderFactory;
 
 public class KcUserStorageProviderFactory implements UserStorageProviderFactory<KcUserStorageProvider> {
 
-	public static final String PROVIDER_ID = "kc-db-user-provider";
+	private static final String PROVIDER_ID = "kc-db-user-provider";
 	
     @Override
     public KcUserStorageProvider create(KeycloakSession session, ComponentModel model) {

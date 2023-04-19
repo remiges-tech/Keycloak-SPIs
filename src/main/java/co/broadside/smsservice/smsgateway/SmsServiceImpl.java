@@ -2,6 +2,9 @@ package co.broadside.smsservice.smsgateway;
 
 import java.util.Map;
 
+/**
+ * Sms Service Implementation for sending of SMS
+ */
 public class SmsServiceImpl implements ISmsService {
 
 	//private static final SnsClient sns = SnsClient.create();

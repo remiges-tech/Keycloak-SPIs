@@ -16,9 +16,7 @@ import com.maxmind.geoip2.record.Country;
 /**
  * This Utility class will load GeoIP2 DB in cache and provides util class for
  * checking of IP against the GeoIP DB.
- * 
  * @author bhavyag
- *
  */
 public class GeoIp2Util {
 
@@ -29,9 +27,9 @@ public class GeoIp2Util {
 	private static GeoIp2Util geoIp2Util;// =new GeoIp2Util();
 
 	/**
-	 * Constructor
-	 * @return
-	 * @throws IOException
+	 * Singleton class that returns instancce of GeoIp2Util
+	 * @return GeoIp2Util instance
+	 * @throws IOException : Throws exception if it is unable to open the GeoIP2 DB file
 	 */
 	public static GeoIp2Util getGeoIp2Util() throws IOException {
 		if (geoIp2Util == null) {
@@ -41,8 +39,8 @@ public class GeoIp2Util {
 	}
 
 	/**
-	 * 
-	 * @throws IOException
+	 * Constructor to initialize and load GeoIP2 DB file in cache
+	 * @throws IOException : Throws exception if it is unable to open the geoip2 database
 	 */
 	private GeoIp2Util() throws IOException {
 		String geoIP2DB = ConfigProvider.getConfig().getConfigValue("kc.home.dir").getValue()
@@ -76,9 +74,9 @@ public class GeoIp2Util {
 	/**
 	 * This method returns Geo Location of the IP address passed.
 	 * @param ip : IP address whose Geo Location is to be found.
-	 * @return
-	 * @throws IOException
-	 * @throws GeoIp2Exception
+	 * @return Geo Location String
+	 * @throws IOException : Throws exception if it is unable to open the geoip2 database
+	 * @throws GeoIp2Exception : generic GeoIP2 error
 	 */
 	public String getIsoCountry(String ip) throws IOException, GeoIp2Exception {
 		/*

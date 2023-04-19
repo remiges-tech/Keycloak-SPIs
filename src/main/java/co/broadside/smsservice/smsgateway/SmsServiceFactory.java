@@ -4,6 +4,9 @@ import java.util.Map;
 
 import org.jboss.logging.Logger;
 
+/**
+ * SMS Service factory
+ */
 public class SmsServiceFactory {
 
 	private static final Logger LOG = Logger.getLogger(SmsServiceFactory.class);

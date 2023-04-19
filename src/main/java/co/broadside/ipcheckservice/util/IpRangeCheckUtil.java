@@ -10,7 +10,6 @@ import inet.ipaddr.IPAddressString;
 /**
  * This utility class checks an IP to be present in the range of IP address passed.
  * @author bhavyag
- *
  */
 public class IpRangeCheckUtil {
 	

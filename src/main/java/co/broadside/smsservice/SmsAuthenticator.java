@@ -21,7 +21,6 @@ import org.keycloak.theme.Theme;
 
 import co.broadside.Constants;
 import co.broadside.smsservice.smsgateway.SmsServiceFactory;
-import co.broadside.userstoragespi.KcUser;
 import co.broadside.userstoragespi.KcUserRepository;
 
 /**
@@ -63,8 +62,7 @@ public class SmsAuthenticator implements Authenticator{
 		/**
 		 * Fetch mobile no from DB
 		 */
-		KcUser kcUser = repository.findUserByUsernameOrEmail(em, user.getUsername());
-		mobileNumber = kcUser.getMobileNo();
+		mobileNumber = repository.findUserByUsernameOrEmail(em, user.getUsername()).getMobileNo();
 		
 		/**
 		 * Fetch mobile no from User attribute of Keycloak

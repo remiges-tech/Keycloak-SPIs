@@ -23,10 +23,10 @@ public class DBUtil {
 	/**
 	 * Method returns a DB Connection
 	 * @return java.sql.Connection object
-	 * @throws ClassNotFoundException
-	 * @throws SQLException
+	 * @throws ClassNotFoundException : JDFC Connection class not found
+	 * @throws SQLException : SQL exception while initiating a connection
 	 */
-	public static Connection getConnection() throws ClassNotFoundException, SQLException {
+	public static Connection getConnection() throws SQLException, ClassNotFoundException {
 		if (connection != null) {
 			return connection;
 		} else {

@@ -10,9 +10,13 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakSessionFactory;
 import org.keycloak.provider.ProviderConfigProperty;
 
+/**
+ * Factory class for SMS OTP send SPI
+ * @author bhavyag
+ */
 public class SmsAuthenticatorFactory implements AuthenticatorFactory{
 
-	public static final String PROVIDER_ID = "sms-authenticator";
+	private static final String PROVIDER_ID = "sms-authenticator";
 
 	@Override
 	public String getId() {

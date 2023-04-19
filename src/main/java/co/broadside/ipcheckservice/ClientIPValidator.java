@@ -75,7 +75,7 @@ public class ClientIPValidator implements Authenticator {
 	
 	private static final Logger LOG = Logger.getLogger(ClientIPValidator.class);
 
-	public static final String PROVIDER_ID = "client-secret-IP";
+	//private static final String PROVIDER_ID = "client-secret-IP";
 
 	@Override
 	public void authenticate(AuthenticationFlowContext context) {
