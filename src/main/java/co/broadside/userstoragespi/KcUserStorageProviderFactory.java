@@ -8,7 +8,11 @@ import org.keycloak.provider.ProviderConfigProperty;
 import org.keycloak.provider.ProviderConfigurationBuilder;
 import org.keycloak.storage.UserStorageProviderFactory;
 
-
+/**
+ * User Storage Provider Factory class for implementing custom User Storage SPI
+ * @author bhavyag
+ *
+ */
 public class KcUserStorageProviderFactory implements UserStorageProviderFactory<KcUserStorageProvider> {
 
 	private static final String PROVIDER_ID = "kc-db-user-provider";

@@ -25,6 +25,23 @@
                      <release>11</release>
                  </configuration>
             </plugin>
+            <plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-javadoc-plugin</artifactId>
+			<version>3.5.0</version>
+			<configuration>
+	          <reportOutputDirectory>${basedir}/</reportOutputDirectory>
+	        </configuration>
+			<executions>
+				<execution>
+					<id>attach-javadocs</id>
+					<goals>
+						<goal>javadoc</goal>
+					</goals>
+					<phase>package</phase>
+				</execution>
+			</executions>
+			</plugin>
            <!-- <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.3.0</version>

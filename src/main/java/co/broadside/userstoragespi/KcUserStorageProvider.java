@@ -33,8 +33,17 @@ public class KcUserStorageProvider implements UserStorageProvider,
     private final KeycloakSession session;
     private final ComponentModel model;
     private final KcUserRepository repository;
+    /**
+     * Entity Manager object to connect to DB
+     */
     protected EntityManager entityManager;
 
+    /**
+     * Constructor required by Keycloak
+     * @param session KeycloakSession
+     * @param model ComponentModel
+     * @param repository KcUserRepository
+     */
     public KcUserStorageProvider(KeycloakSession session, ComponentModel model, KcUserRepository repository) {
         this.session = session;
         this.model = model;

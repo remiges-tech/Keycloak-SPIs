@@ -35,7 +35,7 @@ Also place all the dependencies from above steps inlcuding JARs and geoip databa
 
 
 ## Configuring and Using the SPI [If using Keycloak's user management function]
-If you want to use Custom User table then [go here](#Chapter1)
+If you want to use Custom User table then [go here](/#Chapter1)
 
 The new SPI fits in the registration flow of keycloaks registration.
 

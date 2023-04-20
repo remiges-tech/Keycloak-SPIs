@@ -17,6 +17,11 @@ public class KcUserRoleModel implements RoleModel {
     private String name;
     private final RealmModel realm;
 
+    /**
+     * Constructor
+     * @param name Name of Role
+     * @param realm RealModel
+     */
     public KcUserRoleModel(String name, RealmModel realm) {
         this.name = name;
         this.realm = realm;

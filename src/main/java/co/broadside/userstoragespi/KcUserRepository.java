@@ -17,7 +17,7 @@ public class KcUserRepository {
 
 	/**
 	 * Singleton method to get KcUserRepository instance
-	 * @return
+	 * @return KcUserRepository object
 	 */
 	public static synchronized KcUserRepository getKcUserRepository() {
 		if(kcUserRepository==null){

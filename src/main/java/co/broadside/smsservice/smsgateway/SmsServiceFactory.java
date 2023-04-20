@@ -14,6 +14,11 @@ public class SmsServiceFactory {
 	private SmsServiceFactory() {		
 	}
 	
+	/**
+	 * Sms Service class which checks for simulation mode and decides whether to send SMS or just print it in logs
+	 * @param config Config of properties
+	 * @return SmsServiceImpl
+	 */
 	public static ISmsService get(Map<String, String> config) {
 		if (Boolean.parseBoolean(config.getOrDefault("simulation", "false"))) {
 			return (phoneNumber, message) ->

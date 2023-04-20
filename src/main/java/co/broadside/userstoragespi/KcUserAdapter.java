@@ -25,6 +25,13 @@ public class KcUserAdapter extends AbstractUserAdapter {
 
     private final KcUser user;
 
+    /**
+     * Constructor required by Keycloak
+     * @param session Keycloak Session
+     * @param realm RealmModel
+     * @param model ComponentModel
+     * @param user KcUser
+     */
     public KcUserAdapter(KeycloakSession session, RealmModel realm, ComponentModel model, KcUser user) {
         super(session, realm, model);
         this.storageId = new StorageId(storageProviderModel.getId(), user.getId());
@@ -66,10 +73,18 @@ public class KcUserAdapter extends AbstractUserAdapter {
         return user.getCreated();
     }
 
+    /**
+     * Get Geo Location 
+     * @return ISO Geo Location
+     */
     public String getGeoLocation() {
     	return user.getGeoLocation();
     }
     
+    /**
+     * Get IP Whitelist
+     * @return IP Whitelist
+     */
     public String getIpWhiteList() {
     	return user.getIpWhiteList();
     }
