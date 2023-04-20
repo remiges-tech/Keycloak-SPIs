@@ -34,8 +34,8 @@ You can automatically load the provider in keycloak by putting the `keycloak-bro
 Also place all the dependencies from above steps inlcuding JARs and geoip database on the same path
 
 
-## Configuring and Using the SPI [If using Keycloak's user management function]
-If you want to use Custom User table then [go here](/#Chapter1)
+## Configuring and Using the SPI - Using Keycloak's user management function
+If you want to use Custom User table then [go here](#configuring-and-using-the-spi-using-custom-table)
 
 The new SPI fits in the registration flow of keycloaks registration.
 
@@ -108,9 +108,8 @@ Following properties are to be set in Keycloak for this to work:
      6. Add the attribute key as "ValidISOGeoLocation" and Value as ISO Country code e.g. "IN" [without quotes]
      7. Click on Save and test.
 
-<div id="Chapter1"/>
+## Configuring and Using the SPI-Using Custom Table
 
-## Configuring and Using the SPI [If you want to use your own Custom table]
 Custom table will be created here called __'KCUSER'__ .
 
 The table has following fields:
