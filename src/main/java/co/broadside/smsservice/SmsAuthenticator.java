@@ -3,13 +3,16 @@ package co.broadside.smsservice;
 import java.util.Locale;
 
 import javax.persistence.EntityManager;
-import javax.ws.rs.core.Response;
+//import javax.ws.rs.core.Response;
 
 import org.jboss.logging.Logger;
+import org.jboss.resteasy.spi.HttpResponse;
+import org.jboss.resteasy.spi.ResteasyProviderFactory;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.common.util.SecretGenerator;
+import org.keycloak.common.util.ServerCookie;
 import org.keycloak.connections.jpa.JpaConnectionProvider;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.AuthenticatorConfigModel;
@@ -22,6 +25,11 @@ import org.keycloak.theme.Theme;
 import co.broadside.Constants;
 import co.broadside.smsservice.smsgateway.SmsServiceFactory;
 import co.broadside.userstoragespi.KcUserRepository;
+
+import javax.ws.rs.core.Cookie;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.Response;
+import java.net.URI;
 
 /**
  * This SPI can be used to send SMS OTP for Login Authentication using Keycloak.
@@ -84,6 +92,20 @@ public class SmsAuthenticator implements Authenticator{
 				return;
 			}
 		}
+		
+		/**
+		 * Check if 2FA cookie check is to be performed
+		 */
+		if(Boolean.parseBoolean(config.getConfig().get("setCookieFor2FA"))) {
+			/**
+			 * Check if 2FA was already done within last 7 days.
+			 */
+			if (hasCookie(context)) {
+	            context.success();
+	            return;
+	        }
+		}
+		
 		
 		try {
 			AuthenticationSessionModel authSession = context.getAuthenticationSession();
@@ -176,6 +198,8 @@ public class SmsAuthenticator implements Authenticator{
 				//TODO change logging to debug
 				LOG.info("OTP validation success for "+context.getUser().getEmail());
 				context.success();
+				setCookie(context);
+				
 			}
 		} else {
 			// invalid
@@ -191,6 +215,38 @@ public class SmsAuthenticator implements Authenticator{
 		}
 	}
 
+	private boolean hasCookie(AuthenticationFlowContext context) {
+        Cookie cookie = context.getHttpRequest().getHttpHeaders().getCookies().get(Constants.COOKIE_2FA_ANSWERED);
+        boolean result = cookie != null;
+        if (result) {
+            LOG.info("Bypassing 2FA because cookie as set");
+        }
+        return result;
+    }
+	
+	private void setCookie(AuthenticationFlowContext context) {
+        AuthenticatorConfigModel config = context.getAuthenticatorConfig();
+        
+        int maxCookieAge = 0;
+        if (config != null) {
+            maxCookieAge = 60 * 60 * 24 * Integer.valueOf(config.getConfig().get("cookieMaxAge"));
+        }
+        URI uri = context.getUriInfo().getBaseUriBuilder().path("realms").path(context.getRealm().getName()).build();
+        addCookie(Constants.COOKIE_2FA_ANSWERED, "true",
+                uri.getRawPath(),
+                null, null,
+                maxCookieAge,
+                false, true);
+    }
+	
+	private static void addCookie(String name, String value, String path, String domain, String comment, int maxAge, boolean secure, boolean httpOnly) {
+        HttpResponse response= ResteasyProviderFactory.getInstance().getContextData(HttpResponse.class);
+        StringBuffer cookieBuf = new StringBuffer();
+        ServerCookie.appendCookieValue(cookieBuf, 1, name, value, path, domain, comment, maxAge, secure, httpOnly, null);
+        String cookie = cookieBuf.toString();
+        response.getOutputHeaders().add(HttpHeaders.SET_COOKIE, cookie);
+    }
+	
 	@Override
 	public boolean requiresUser() {
 		return true;

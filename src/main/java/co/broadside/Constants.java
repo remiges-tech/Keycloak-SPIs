@@ -28,5 +28,8 @@ public class Constants {
 	 * Attribute name for Mobile number for SMS OTP.  This attribute name will be searched for in Keycloak Configuration at User level
 	 */
 	public static final String ATTRIB_MOB_NUM="MobileNumber";
-	
+	/**
+	 * Cookie name if 2FA is answered
+	 */
+	public static final String COOKIE_2FA_ANSWERED="COOKIE_2FA_ANSWERED";
 }
