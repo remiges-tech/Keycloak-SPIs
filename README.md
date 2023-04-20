@@ -34,7 +34,8 @@ You can automatically load the provider in keycloak by putting the `keycloak-bro
 Also place all the dependencies from above steps inlcuding JARs and geoip database on the same path
 
 
-## Configuring and Using the SPI
+## Configuring and Using the SPI [If using Keycloak's user management function]
+If you want to use Custom User table then [go here](#Chapter1)
 
 The new SPI fits in the registration flow of keycloaks registration.
 
@@ -106,4 +107,37 @@ Following properties are to be set in Keycloak for this to work:
      5. Click on "Attributes"
      6. Add the attribute key as "ValidISOGeoLocation" and Value as ISO Country code e.g. "IN" [without quotes]
      7. Click on Save and test.
-     	
+
+<div id="Chapter1"/>
+
+## Configuring and Using the SPI [If you want to use your own Custom table]
+Custom table will be created here called __'KCUSER'__ .
+
+The table has following fields:
+  * id
+  * username
+  * email
+  * firstname
+  * lastname
+  * password
+  * created
+  * geolocation : e.g. "IN" [without quotes]
+  * ipwhitelist : e.g. "127.0.0.1-127.0.0.3,127.0.0.5,192.168.0.220-192.168.0.224" [without quotes]
+  * mobileno
+  
+Add details to this table in your database. It'll use the same schema details as keycloak. [Note:  In case you want to use different database, use DBUtil.java to read DB creds from keycloak.conf and create custom connection ]
+
+Configure keyclaok to use our custom User Storage table
+   1. Login to Keycloak Admin Portal
+   2. Select the relevant Realm
+   3. Click on 'User federation' on the left sidebar
+   4. Click on 'Add kc-db-user-provider provider'
+   5. Add a Console display name.
+
+That's it.
+
+Now Keycloak will use your KCUSER table for authentication.
+
+Note that at this point, the password is stored in plain text in the  __KCUSER__  table and the same is passed for authentication.
+
+In all cases, you would want to encrypt your password. Add your logic in method  __'validateCredentials'__  of  __'KcUserRepository.java'__
