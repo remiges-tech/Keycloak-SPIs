@@ -32,4 +32,8 @@ public class Constants {
 	 * Cookie name if 2FA is answered
 	 */
 	public static final String COOKIE_2FA_ANSWERED="COOKIE_2FA_ANSWERED";
+	/**
+	 * Cookie name if 2FA is answered
+	 */
+	public static final String ATTRIB_2FA_COOKIE="setCookieFor2FA";
 }

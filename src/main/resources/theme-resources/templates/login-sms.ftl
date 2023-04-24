@@ -18,7 +18,11 @@
 						<span><a href="${url.loginUrl}">${kcSanitize(msg("backToLogin"))?no_esc}</a></span>
 					</div>
 				</div>
-
+			<div id="kc-resend-buttons" class="${properties.kcFormButtonsClass!}">
+				<input name="resend"
+                   class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonLargeClass!}"
+                   type="submit" value="${msg("resendCode")}"/>
+			</div>
 				<div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
 					<input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" type="submit" value="${msg("doSubmit")}"/>
 				</div>

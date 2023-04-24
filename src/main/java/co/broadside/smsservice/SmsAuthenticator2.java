@@ -5,45 +5,40 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.persistence.EntityManager;
+
 import org.jboss.logging.Logger;
 import org.jboss.resteasy.spi.HttpResponse;
 import org.jboss.resteasy.spi.ResteasyProviderFactory;
-import org.keycloak.TokenCategory;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.AuthenticationFlowException;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.common.util.SecretGenerator;
 import org.keycloak.common.util.ServerCookie;
-import org.keycloak.crypto.Algorithm;
-import org.keycloak.crypto.KeyUse;
-import org.keycloak.crypto.KeyWrapper;
-import org.keycloak.crypto.SignatureProvider;
-import org.keycloak.crypto.SignatureSignerContext;
+import org.keycloak.connections.jpa.JpaConnectionProvider;
 import org.keycloak.email.EmailException;
 import org.keycloak.email.EmailTemplateProvider;
-import org.keycloak.jose.jws.JWSBuilder;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.AuthenticatorConfigModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
-import org.keycloak.models.KeyManager.ActiveRsaKey;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.theme.Theme;
 
 import co.broadside.Constants;
 import co.broadside.smsservice.smsgateway.SmsServiceFactory;
+import co.broadside.userstoragespi.KcUserRepository;
 import javax.ws.rs.core.Cookie;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 
 /**
  * This SPI can be used to send SMS OTP for Login Authentication using Keycloak.
+ * Note that this SPI refers to mobile no from Custom User table 'KCUSER'
  * To enable SMS OTP as a step in Authentication Workflow, 
  * 1. Login to Keycloak Admin Portal.
  * 2. Click on the relevant Realm on top Left corner.
@@ -64,34 +59,44 @@ import java.security.PublicKey;
  * @author bhavyag
  *
  */
-public class SmsAuthenticator implements Authenticator{
+public class SmsAuthenticator2 implements Authenticator{
 
 	private static final String TPL_CODE = "login-sms.ftl";
-	private static final Logger LOG = Logger.getLogger(SmsAuthenticator.class);
+	private static final Logger LOG = Logger.getLogger(SmsAuthenticator2.class);
 
 	@Override
 	public void authenticate(AuthenticationFlowContext context) {
 		AuthenticatorConfigModel config = context.getAuthenticatorConfig();
 		KeycloakSession session = context.getSession();
 		UserModel user = context.getUser();
+		EntityManager em=context.getSession().getProvider(JpaConnectionProvider.class, "user-store").getEntityManager();
+		KcUserRepository repository = KcUserRepository.getKcUserRepository();
 		
 		String mobileNumber="";
 		/**
 		 * Fetch mobile no from DB
 		 */
-		mobileNumber = user.getFirstAttribute(Constants.ATTRIB_MOB_NUM);
+		mobileNumber = repository.findUserByUsernameOrEmail(em, user.getUsername()).getMobileNo();
 		
 		/**
 		 * Fetch mobile no from User attribute of Keycloak
 		 */
-		if (mobileNumber == null || mobileNumber.isBlank()) {
-			String errorString = String.format(
-					"'%s' attribute for the user <%s>is blank or not present. Please set it.", Constants.ATTRIB_MOB_NUM,
-					user.getUsername());
-			LOG.error(errorString);
-			/*context.failureChallenge(AuthenticationFlowError.INTERNAL_ERROR,
-					context.form().setError(errorString).createErrorPage(Response.Status.INTERNAL_SERVER_ERROR));
-			return;*/
+		if(mobileNumber==null || mobileNumber.isBlank()) {
+			//LOG.warn("Mobile no for user not found in DB table. Checking at Keycloak level");
+			mobileNumber = user.getFirstAttribute(Constants.ATTRIB_MOB_NUM);
+			//TODO : Mobile No validation required?
+			if(mobileNumber==null) {
+				String errorString = String.format(
+						"'%s' attribute for the user <%s>is blank or not present. Please set it.",
+						Constants.ATTRIB_MOB_NUM,user.getUsername());
+				LOG.error(errorString);
+
+				context.failureChallenge(AuthenticationFlowError.INTERNAL_ERROR,
+						context.form()
+						.setError(errorString)
+						.createErrorPage(Response.Status.INTERNAL_SERVER_ERROR));
+				return;
+			}
 		}
 		
 		/**
@@ -151,16 +156,14 @@ public class SmsAuthenticator implements Authenticator{
 	private void sendOTP(AuthenticationFlowContext context, AuthenticatorConfigModel config, KeycloakSession session,
 			UserModel user, String mobileNumber, int ttl, String code) {		
 		try {
+			Theme theme = session.theme().getTheme(Theme.Type.LOGIN);
+			Locale locale = session.getContext().resolveLocale(user);
+			String smsAuthText = theme.getMessages(locale).getProperty("smsAuthText");
+			String smsText = String.format(smsAuthText, code, Math.floorDiv(ttl, 60));
 			/*
 			 * SMS OTP Send
 			 */
-			if(mobileNumber!=null) {
-				Theme theme = session.theme().getTheme(Theme.Type.LOGIN);
-				Locale locale = session.getContext().resolveLocale(user);
-				String smsAuthText = theme.getMessages(locale).getProperty("smsAuthText");
-				String smsText = String.format(smsAuthText, code, Math.floorDiv(ttl, 60));
-				SmsServiceFactory.get(config.getConfig()).send(mobileNumber, smsText);
-			}			
+			SmsServiceFactory.get(config.getConfig()).send(mobileNumber, smsText);
 			/*
 			 * Email OTP Send
 			 */
@@ -176,16 +179,18 @@ public class SmsAuthenticator implements Authenticator{
 	
 	
 	@Override
-	public void action(AuthenticationFlowContext context) {		
+	public void action(AuthenticationFlowContext context) {
+		
 		MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
         if (formData.containsKey("resend")) {
+            //removeSessionOTP(context);
         	sendEmailWithCode(context.getSession(), context.getRealm(), context.getUser(), context.getAuthenticationSession().getAuthNote("code"));
         	LOG.info("Resending OTP");
-        	context.challenge(context.form().setAttribute("realm", context.getRealm()).createForm(TPL_CODE));
             return;
         }
 		
 		String enteredCode = context.getHttpRequest().getDecodedFormParameters().getFirst("code");
+
 		AuthenticationSessionModel authSession = context.getAuthenticationSession();
 		String code = authSession.getAuthNote("code");
 		String ttl = authSession.getAuthNote("ttl");
@@ -236,60 +241,30 @@ public class SmsAuthenticator implements Authenticator{
 	
 	private boolean hasCookie(AuthenticationFlowContext context) {
         Cookie cookie = context.getHttpRequest().getHttpHeaders().getCookies().get(Constants.COOKIE_2FA_ANSWERED);
-        if(cookie!=null) {
-        	String encryptedToken = getEncryptedCookieString(context);
-        	String encryptedCookieValue = cookie.getValue();
-        	if (encryptedCookieValue!=null && encryptedCookieValue.equals(encryptedToken)){
-                LOG.info(Constants.COOKIE_2FA_ANSWERED + " cookie is set and valid.");
-                return true;
-            }
+        boolean result = cookie != null;
+        if (result) {
+            LOG.info("Bypassing 2FA because cookie as set");
         }
-        return false;
+        return result;
     }
 	
 	private void setCookie(AuthenticationFlowContext context) {
 		if(!Boolean.parseBoolean(context.getAuthenticatorConfig().getConfig().get(Constants.ATTRIB_2FA_COOKIE))) {
 			return;
 		}
+        AuthenticatorConfigModel config = context.getAuthenticatorConfig();
+        
         int maxCookieAge = 0;
-        if (context.getAuthenticatorConfig() != null) {
-            maxCookieAge = 60 * 60 * 24 * Integer.valueOf(context.getAuthenticatorConfig().getConfig().get("cookieMaxAge"));
+        if (config != null) {
+            maxCookieAge = 60 * 60 * 24 * Integer.valueOf(config.getConfig().get("cookieMaxAge"));
         }
+        //TODO : Encrypt cookie using keys and check encrypted cookie
         URI uri = context.getUriInfo().getBaseUriBuilder().path("realms").path(context.getRealm().getName()).build();
-        addCookie(Constants.COOKIE_2FA_ANSWERED, getEncryptedCookieString(context),
+        addCookie(Constants.COOKIE_2FA_ANSWERED, "true",
                 uri.getRawPath(),
                 null, null,
                 maxCookieAge,
                 false, true);
-    }
-	
-	private String getEncryptedCookieString(AuthenticationFlowContext context) {
-		PrivateKey key = getActiveRsaKey(context).getPrivateKey();
-        String userAgentId = getUserAgentId(context);
-        return encryptToken(context, userAgentId, key);
-	}
-	
-	private ActiveRsaKey getActiveRsaKey(AuthenticationFlowContext context) {
-        KeyWrapper key = context.getSession().keys().getActiveKey(context.getRealm(), KeyUse.SIG, Algorithm.RS256);
-        return new ActiveRsaKey(key.getKid(), (PrivateKey) key.getPrivateKey(), (PublicKey) key.getPublicKey(), key.getCertificate());
-    }
-	
-	private String encryptToken(AuthenticationFlowContext context, String value, PrivateKey privateKey){
-		String algorithm = context.getSession().tokens().signatureAlgorithm(TokenCategory.INTERNAL);
-		SignatureSignerContext signer = context.getSession().getProvider(SignatureProvider.class, algorithm).signer();
-		
-        return new JWSBuilder().jsonContent(value).sign(signer);
-    }
-	
-	private String getUserAgentId(AuthenticationFlowContext context){
-        MultivaluedMap<String, String> headers = context.getHttpRequest().getHttpHeaders().getRequestHeaders();
-        String username = context.getUser().getUsername();
-        String userAgent = headers.getFirst("User-Agent");
-        String userIP = headers.getFirst("X-Forwarded-For");
-        if (userIP == null){
-            userIP = headers.getFirst("Remote-Addr");
-        }
-        return username + "_" + userIP + "_" +userAgent;
     }
 	
 	private static void addCookie(String name, String value, String path, String domain, String comment, int maxAge, boolean secure, boolean httpOnly) {
@@ -316,6 +291,7 @@ public class SmsAuthenticator implements Authenticator{
             EmailTemplateProvider emailProvider = session.getProvider(EmailTemplateProvider.class);
             emailProvider.setRealm(realm);
             emailProvider.setUser(user);
+            // Don't forget to add the welcome-email.ftl (html and text) template to your theme.
             emailProvider.send("emailCodeSubject", subjectParams, "code-email.ftl", mailBodyAttributes);
         } catch (EmailException eex) {
             LOG.errorf(eex, "Failed to send access code email. realm=%s user=%s", realm.getId(), user.getUsername());
