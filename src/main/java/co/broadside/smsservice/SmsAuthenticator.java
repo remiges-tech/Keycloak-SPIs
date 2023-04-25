@@ -271,11 +271,7 @@ public class SmsAuthenticator implements Authenticator{
         MultivaluedMap<String, String> headers = context.getHttpRequest().getHttpHeaders().getRequestHeaders();
         String username = context.getUser().getUsername();
         String userAgent = headers.getFirst("User-Agent");
-        String userIP = headers.getFirst("X-Forwarded-For");
-        if (userIP == null){
-            userIP = headers.getFirst("Remote-Addr");
-        }
-        return username + "_" + userIP + "_" +userAgent;
+        return username + "_" +userAgent;
     }
 	
 	private static void addCookie(String name, String value, String path, String domain, String comment, int maxAge, boolean secure, boolean httpOnly) {
