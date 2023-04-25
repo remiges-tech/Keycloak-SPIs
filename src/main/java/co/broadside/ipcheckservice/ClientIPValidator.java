@@ -14,7 +14,7 @@ import org.keycloak.models.UserModel;
 
 import com.maxmind.geoip2.exception.GeoIp2Exception;
 
-import co.broadside.Constants;
+import co.broadside.ipcheckservice.util.AttributesReader;
 import co.broadside.ipcheckservice.util.GeoIp2Util;
 import co.broadside.ipcheckservice.util.IpRangeCheckUtil;
 
@@ -71,11 +71,8 @@ public class ClientIPValidator implements Authenticator {
 	
 	private static final Logger LOG = Logger.getLogger(ClientIPValidator.class);
 
-	//private static final String PROVIDER_ID = "client-secret-IP";
-
 	@Override
 	public void authenticate(AuthenticationFlowContext context) {
-		UserModel user = context.getUser();
 		AuthenticatorConfigModel config = context.getAuthenticatorConfig();
 		
 		/*
@@ -88,7 +85,7 @@ public class ClientIPValidator implements Authenticator {
 		 * Check if IP whitelist Validation is required.
 		 */
 		if (Boolean.parseBoolean(config.getConfig().getOrDefault("IP Validation", "true"))) {
-			if (!ipWhitelistCheck(context, user, config, ipWithoutProxy, ipWithProxy)) {
+			if (!ipWhitelistCheck(context, ipWithoutProxy, ipWithProxy)) {
 				return;
 			}
 		} else {
@@ -98,7 +95,7 @@ public class ClientIPValidator implements Authenticator {
 		 * Check if GEO IP validation is to be performed
 		 */
 		if (Boolean.parseBoolean(config.getConfig().getOrDefault("Geo IP Validation", "true"))) {
-			if (!geoIpCheck(context, user, ipWithoutProxy, ipWithProxy)) {
+			if (!geoIpCheck(context, ipWithoutProxy, ipWithProxy)) {
 				return;
 			}
 		} else {
@@ -116,7 +113,7 @@ public class ClientIPValidator implements Authenticator {
 	 * @param kcUser
 	 * @return true if Geo location check passes. Else false
 	 */
-	private boolean geoIpCheck(AuthenticationFlowContext context, UserModel user, String ipWithoutProxy, String ipWithProxy) {
+	private boolean geoIpCheck(AuthenticationFlowContext context, String ipWithoutProxy, String ipWithProxy) {
 		String countryIsoWithProxy = "";
 		String countryIsoWithoutProxy = "";
 		/*
@@ -141,44 +138,19 @@ public class ClientIPValidator implements Authenticator {
 		/*
 		 * 2. Get allowed Geo location for user from config
 		 */
-		boolean geoLocationAvailable = false;
-		String allowedGeoLocation = "";
-		String allowedCountry = user.getFirstAttribute(Constants.ATTRIB_IP_GEO_LOC);
-
-		if (allowedCountry == null || allowedCountry.isBlank()) {
-			LOG.info("User level Geo Location is not set. Checking Client level Geo Location");
-			String clientLevelGeoLocation = "";
-			try {
-				clientLevelGeoLocation = getClientLevelAttribute(context, Constants.ROLE_IP_VALIDATION,
-						Constants.ATTRIB_IP_GEO_LOC);
-			} catch (Exception e) {
-				LOG.error("Exception while reading client level Geo Location : " + e.getLocalizedMessage());
-			}
-
-			if (clientLevelGeoLocation == null || clientLevelGeoLocation.isBlank()) {
-				String errorString = String.format("Geo Location is not set at Client level for user <%s>",
-						user.getUsername());
-				LOG.error(errorString);
-				/*
-				 * context.failureChallenge(AuthenticationFlowError.INTERNAL_ERROR,
-				 * context.form().setError(errorString).createErrorPage(Response.Status.
-				 * INTERNAL_SERVER_ERROR)); return false;
-				 */
-			} else {
-				allowedGeoLocation = clientLevelGeoLocation;
-				geoLocationAvailable = true;
-			}
-		} else {
-			allowedGeoLocation = allowedCountry;
-			geoLocationAvailable = true;
-		}
+		String allowedGeoLocation = AttributesReader.fetchGeoLocationFromConfig(context,LOG);
+		
 		LOG.warn(String.format("CountryofIP<%s>/<%s>|| allowedCountry<%s>", countryIsoWithoutProxy, countryIsoWithProxy,
 				allowedGeoLocation));
 
 		/*
 		 * 3. Validate Geo location of IP against allowed Geo Location
 		 */
-		if (geoLocationAvailable) {
+		if (allowedGeoLocation.isBlank()) {
+			LOG.info(
+					"Geo Location for user <%s> is not set at User and Client level. Hence skipping Geo Location Check");
+			return true;
+		} else {			
 			if (allowedGeoLocation.equals(countryIsoWithoutProxy) || allowedGeoLocation.equals(countryIsoWithProxy)) {
 				LOG.info("GeoIP2 validation success");
 				context.success();
@@ -192,23 +164,7 @@ public class ClientIPValidator implements Authenticator {
 						context.form().setError(err).createErrorPage(Response.Status.INTERNAL_SERVER_ERROR));
 				return false;
 			}
-		} else {
-			LOG.info(
-					"Geo Location for user <%s> is not set at User and Client level. Hence skipping Geo Location Check");
-			return true;
 		}
-	}
-
-
-	/**
-	 * Method to fetch Client level Attribute from Role passed.
-	 * @param context : AuthenticationFlowContext of Keycloak
-	 * @param role : Role which needs to be fetched
-	 * @param attribute : Attribute that needs to be fetched from the role passed
-	 * @return : Attribute String of Role at Client level
-	 */
-	private String getClientLevelAttribute(AuthenticationFlowContext context, String role, String attribute) {
-		return context.getSession().getContext().getClient().getRole(role).getAttributes().get(attribute).get(0);
 	}
 
 	/**
@@ -220,54 +176,19 @@ public class ClientIPValidator implements Authenticator {
 	 * @param ipWithProxy
 	 * @return
 	 */
-	private boolean ipWhitelistCheck(AuthenticationFlowContext context, UserModel user, AuthenticatorConfigModel config,
-			String ipWithoutProxy, String ipWithProxy) {
+	private boolean ipWhitelistCheck(AuthenticationFlowContext context, String ipWithoutProxy, String ipWithProxy) {
 		/*
 		 * 1. Get IP against white list
 		 */
-		String ipWhiteList = "";
-		String userLevelIPWhitelist = "";
-		boolean ipWhitelistPresent = false;
-		userLevelIPWhitelist = user.getFirstAttribute(Constants.ATTRIB_IP_WHITELIST);
-		if (userLevelIPWhitelist == null || userLevelIPWhitelist.isBlank()) {
-			/*
-			 * If User level whitelist is not set, then we need to check Client level whitelist
-			 */
-			LOG.info("User level IP whitelist is not set. Checking Client level whitelist");
-			String clientLevelIPWhitelist = "";
-			try {
-				clientLevelIPWhitelist = getClientLevelAttribute(context, Constants.ROLE_IP_VALIDATION,
-						Constants.ATTRIB_IP_WHITELIST);
-			} catch (Exception e) {
-				LOG.error("Exception while reading client level IP Whitelist : " + e.getLocalizedMessage());
-			}
-
-			if (clientLevelIPWhitelist == null || clientLevelIPWhitelist.isBlank()) {
-				String errorString = String.format(
-						"'ValidIpWhitelist' attribute for the user <%s> is blank or not present at Client level and User Level",
-						user.getUsername());
-				LOG.error(errorString);
-				/*
-				 * context.failureChallenge(AuthenticationFlowError.INTERNAL_ERROR,
-				 * context.form().setError(errorString).createErrorPage(Response.Status.
-				 * INTERNAL_SERVER_ERROR)); return false;
-				 */
-			} else {
-				ipWhiteList = clientLevelIPWhitelist;
-				ipWhitelistPresent = true;
-			}
-
-		} else {
-			ipWhiteList = userLevelIPWhitelist;
-			ipWhitelistPresent = true;
-		}
+		String ipWhiteList = AttributesReader.fetchIpWhitelistFromConfig(context, LOG);
+		
 		// TODO: Change logging to debug
 		LOG.info(String.format("IP Address <%s> or <%s> || whitelist <%s>", ipWithoutProxy, ipWithProxy, ipWhiteList));
 
 		/*
 		 * 2. Check IP against white list
 		 */
-		if (ipWhitelistPresent) {
+		if (!ipWhiteList.isBlank()) {
 			if (!(IpRangeCheckUtil.checkIP(ipWhiteList, ipWithoutProxy)
 					|| IpRangeCheckUtil.checkIP(ipWhiteList, ipWithProxy))) {
 				LOG.error(String.format("IP Address <%s> or <%s> is not part of whitelist, therefore access is denied",
@@ -287,6 +208,8 @@ public class ClientIPValidator implements Authenticator {
 			return true;
 		}
 	}	
+	
+	
 	
 	@Override
 	public void action(AuthenticationFlowContext context) {

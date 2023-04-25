@@ -28,13 +28,11 @@ public class KcUserRepository {
 
 	List<KcUser> getAllUsers(EntityManager em) {
 		TypedQuery<KcUser> query = em.createNamedQuery("getAllUsers", KcUser.class);
-
-		List<KcUser> users = query.getResultList();
 		/*
 		 * List<UserModel> users = new LinkedList<>(); for (UserEntity entity : results)
 		 * users.add(new KcUserAdapter(session, realm, model, entity));
 		 */
-		return users;
+		return query.getResultList();
 	}
 
 	int getUsersCount(EntityManager em) {

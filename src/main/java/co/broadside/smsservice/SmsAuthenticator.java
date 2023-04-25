@@ -15,9 +15,6 @@ import org.keycloak.authentication.AuthenticationFlowException;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.common.util.SecretGenerator;
 import org.keycloak.common.util.ServerCookie;
-import org.keycloak.crypto.Algorithm;
-import org.keycloak.crypto.KeyUse;
-import org.keycloak.crypto.KeyWrapper;
 import org.keycloak.crypto.SignatureProvider;
 import org.keycloak.crypto.SignatureSignerContext;
 import org.keycloak.email.EmailException;
@@ -28,7 +25,6 @@ import org.keycloak.models.AuthenticatorConfigModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
-import org.keycloak.models.KeyManager.ActiveRsaKey;
 import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.theme.Theme;
 
@@ -39,8 +35,6 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 import java.net.URI;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 
 /**
  * This SPI can be used to send SMS OTP for Login Authentication using Keycloak.
@@ -68,6 +62,7 @@ public class SmsAuthenticator implements Authenticator{
 
 	private static final String TPL_CODE = "login-sms.ftl";
 	private static final Logger LOG = Logger.getLogger(SmsAuthenticator.class);
+	private static final String CONST_REALM="realm";
 
 	@Override
 	public void authenticate(AuthenticationFlowContext context) {
@@ -89,9 +84,6 @@ public class SmsAuthenticator implements Authenticator{
 					"'%s' attribute for the user <%s>is blank or not present. Please set it.", Constants.ATTRIB_MOB_NUM,
 					user.getUsername());
 			LOG.error(errorString);
-			/*context.failureChallenge(AuthenticationFlowError.INTERNAL_ERROR,
-					context.form().setError(errorString).createErrorPage(Response.Status.INTERNAL_SERVER_ERROR));
-			return;*/
 		}
 		
 		/**
@@ -115,8 +107,7 @@ public class SmsAuthenticator implements Authenticator{
 			if(authSession.getAuthNote("code")!=null && Long.parseLong(authSession.getAuthNote("ttl")) > System.currentTimeMillis()) {
 				context.attempted();
 				return;
-			}
-			
+			}			
 			/*
 			 * length: Length of OTP to be generated. This is currently defined in the Authentication flow. Can be read from config as well.
 			 */
@@ -166,7 +157,7 @@ public class SmsAuthenticator implements Authenticator{
 			 */
 			sendEmailWithCode(session, context.getRealm(), user, code);
 			
-			context.challenge(context.form().setAttribute("realm", context.getRealm()).createForm(TPL_CODE));
+			context.challenge(context.form().setAttribute(CONST_REALM, context.getRealm()).createForm(TPL_CODE));
 		} catch (Exception e) {
 			context.failureChallenge(AuthenticationFlowError.INTERNAL_ERROR,
 				context.form().setError("smsAuthSmsNotSent", e.getMessage())
@@ -181,7 +172,7 @@ public class SmsAuthenticator implements Authenticator{
         if (formData.containsKey("resend")) {
         	sendEmailWithCode(context.getSession(), context.getRealm(), context.getUser(), context.getAuthenticationSession().getAuthNote("code"));
         	LOG.info("Resending OTP");
-        	context.challenge(context.form().setAttribute("realm", context.getRealm()).createForm(TPL_CODE));
+        	context.challenge(context.form().setAttribute(CONST_REALM, context.getRealm()).createForm(TPL_CODE));
             return;
         }
 		
@@ -220,7 +211,7 @@ public class SmsAuthenticator implements Authenticator{
 			AuthenticationExecutionModel execution = context.getExecution();
 			if (execution.isRequired()) {
 				context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS,
-					context.form().setAttribute("realm", context.getRealm())
+					context.form().setAttribute(CONST_REALM, context.getRealm())
 						.setError("smsAuthCodeInvalid").createForm(TPL_CODE));
 			} else if (execution.isConditional() || execution.isAlternative()) {
 				context.attempted();
@@ -264,17 +255,12 @@ public class SmsAuthenticator implements Authenticator{
     }
 	
 	private String getEncryptedCookieString(AuthenticationFlowContext context) {
-		PrivateKey key = getActiveRsaKey(context).getPrivateKey();
         String userAgentId = getUserAgentId(context);
-        return encryptToken(context, userAgentId, key);
+        return encryptToken(context, userAgentId);
 	}
+
 	
-	private ActiveRsaKey getActiveRsaKey(AuthenticationFlowContext context) {
-        KeyWrapper key = context.getSession().keys().getActiveKey(context.getRealm(), KeyUse.SIG, Algorithm.RS256);
-        return new ActiveRsaKey(key.getKid(), (PrivateKey) key.getPrivateKey(), (PublicKey) key.getPublicKey(), key.getCertificate());
-    }
-	
-	private String encryptToken(AuthenticationFlowContext context, String value, PrivateKey privateKey){
+	private String encryptToken(AuthenticationFlowContext context, String value){
 		String algorithm = context.getSession().tokens().signatureAlgorithm(TokenCategory.INTERNAL);
 		SignatureSignerContext signer = context.getSession().getProvider(SignatureProvider.class, algorithm).signer();
 		

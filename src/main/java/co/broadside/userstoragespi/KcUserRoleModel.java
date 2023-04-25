@@ -1,5 +1,6 @@
 package co.broadside.userstoragespi;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -116,6 +117,6 @@ public class KcUserRoleModel implements RoleModel {
 
     @Override
     public Map<String, List<String>> getAttributes() {
-        return null;
+        return Collections.emptyMap();
     }
 }

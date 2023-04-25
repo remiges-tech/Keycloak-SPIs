@@ -100,7 +100,7 @@ public class ClientIPValidatorCustomUserStore implements Authenticator {
 		 * Check if IP whitelist Validation is required.
 		 */
 		if (Boolean.parseBoolean(config.getConfig().getOrDefault("IP Validation", "true"))) {
-			if (!ipWhitelistCheck(context, user, config, ipWithoutProxy, ipWithProxy, kcUser)) {
+			if (!ipWhitelistCheck(context, user, ipWithoutProxy, ipWithProxy, kcUser)) {
 				return;
 			}
 		} else {
@@ -232,8 +232,7 @@ public class ClientIPValidatorCustomUserStore implements Authenticator {
 	 * @param ipWithProxy
 	 * @return
 	 */
-	private boolean ipWhitelistCheck(AuthenticationFlowContext context, UserModel user, AuthenticatorConfigModel config,
-			String ipWithoutProxy, String ipWithProxy, KcUser kcUser) {
+	private boolean ipWhitelistCheck(AuthenticationFlowContext context, UserModel user, String ipWithoutProxy, String ipWithProxy, KcUser kcUser) {
 		/*
 		 * 1. Get IP against white list
 		 */
