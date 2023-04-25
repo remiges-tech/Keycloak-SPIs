@@ -59,10 +59,10 @@ import java.net.URI;
  * @author bhavyag
  *
  */
-public class SmsAuthenticator2 implements Authenticator{
+public class SmsAuthenticatorCustomUserStore implements Authenticator{
 
 	private static final String TPL_CODE = "login-sms.ftl";
-	private static final Logger LOG = Logger.getLogger(SmsAuthenticator2.class);
+	private static final Logger LOG = Logger.getLogger(SmsAuthenticatorCustomUserStore.class);
 
 	@Override
 	public void authenticate(AuthenticationFlowContext context) {

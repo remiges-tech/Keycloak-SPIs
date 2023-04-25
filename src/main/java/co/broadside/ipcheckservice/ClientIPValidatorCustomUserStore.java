@@ -24,6 +24,7 @@ import co.broadside.ipcheckservice.util.IpRangeCheckUtil;
 
 /**
  * This SPI for Keycloak checks for IP based validation for a user.
+ * Note this SPI refers to User details from Custom User table 'KCUSER'
  * 
  * [A] IP/IP RANGE VALIDATION : Whitelist of Range of IP or List of IP is defined in the attributes against which the user IP is validated.
  *     ~~~~~~~~~~~~~~~~~~~~~~~
@@ -38,7 +39,7 @@ import co.broadside.ipcheckservice.util.IpRangeCheckUtil;
  *          	 click on "Add Step" at relevant position in the flow,
  *          	 Search for "IP Validator" and Click Add.
  *          	 Go to setting besides "IP Validator" and add any alias and Enable/Disable 'IP Validation'
- * 	2. At User Level [Valid IP Range]:
+ * 	2. At User Level-Keycloak [Valid IP Range]:
  *    	a. Login to Keycloak Admin Portal
  *    	b. Select relevant Realm
  *    	c. Under "Manage" section on the Left sidebar, select "Users" 
@@ -60,7 +61,7 @@ import co.broadside.ipcheckservice.util.IpRangeCheckUtil;
  *          	 click on "Add Step" at relevant position in the flow,
  *          	 Search for "IP Validator" and Click Add.
  *          	 Go to setting besides "IP Validator" and add any alias and Enable/Disable 'Geo IP Validation'
- *  2. At User Level [Valid Geo Location]:
+ *  2. At User Level-Keycloak [Valid Geo Location]:
  *    	a. Login to Keycloak Admin Portal
  *    	b. Select relevant Realm
  *    	c. Under "Manage" section on the Left sidebar, select "Users" 
@@ -71,9 +72,9 @@ import co.broadside.ipcheckservice.util.IpRangeCheckUtil;
  * @author bhavyag
  *
  */
-public class ClientIPValidator2 implements Authenticator {
+public class ClientIPValidatorCustomUserStore implements Authenticator {
 	
-	private static final Logger LOG = Logger.getLogger(ClientIPValidator2.class);
+	private static final Logger LOG = Logger.getLogger(ClientIPValidatorCustomUserStore.class);
 
 	//private static final String PROVIDER_ID = "client-secret-IP";
 
