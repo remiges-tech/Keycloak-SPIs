@@ -24,7 +24,6 @@ public class SmsServiceFactory {
 			return (phoneNumber, message) ->
 				LOG.warn(String.format("***** SIMULATION MODE ***** Would send SMS to %s with text: %s", phoneNumber, message));
 		} else {
-			//TODO: Actual SMS service call
 			return new SmsServiceImpl(config);
 		}
 	}

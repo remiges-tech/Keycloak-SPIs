@@ -98,6 +98,12 @@
             <artifactId>lombok</artifactId>
             <version>1.18.26</version>
         </dependency>
+		<dependency>
+		    <groupId>com.vonage</groupId>
+		    <artifactId>client</artifactId>
+		    <version>7.3.0</version>
+		</dependency>
+
     </dependencies>
 
 

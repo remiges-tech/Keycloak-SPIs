@@ -67,18 +67,13 @@ public class SmsAuthenticator implements Authenticator{
 	@Override
 	public void authenticate(AuthenticationFlowContext context) {
 		AuthenticatorConfigModel config = context.getAuthenticatorConfig();
-		KeycloakSession session = context.getSession();
 		UserModel user = context.getUser();
 		
 		String mobileNumber="";
 		/**
-		 * Fetch mobile no from DB
-		 */
-		mobileNumber = user.getFirstAttribute(Constants.ATTRIB_MOB_NUM);
-		
-		/**
 		 * Fetch mobile no from User attribute of Keycloak
 		 */
+		mobileNumber = user.getFirstAttribute(Constants.ATTRIB_MOB_NUM);		
 		if (mobileNumber == null || mobileNumber.isBlank()) {
 			String errorString = String.format(
 					"'%s' attribute for the user <%s>is blank or not present. Please set it.", Constants.ATTRIB_MOB_NUM,
@@ -91,7 +86,7 @@ public class SmsAuthenticator implements Authenticator{
 		 */
 		if(Boolean.parseBoolean(config.getConfig().get(Constants.ATTRIB_2FA_COOKIE))) {
 			/**
-			 * Check if 2FA was already done within last 7 days.
+			 * Check if 2FA was already done within last 'x' days.
 			 */
 			if(hasCookie(context)) {
 	            context.success();
@@ -111,11 +106,7 @@ public class SmsAuthenticator implements Authenticator{
 			/*
 			 * length: Length of OTP to be generated. This is currently defined in the Authentication flow. Can be read from config as well.
 			 */
-			int length = Integer.parseInt(config.getConfig().get("length"));
-			/*
-			 * ttl: Time to Live of OTP to be generated
-			 */
-			int ttl = Integer.parseInt(config.getConfig().get("ttl"));		
+			int length = Integer.parseInt(config.getConfig().get("length"));	
 			/*
 			 * Generating OTP
 			 */
@@ -123,13 +114,11 @@ public class SmsAuthenticator implements Authenticator{
 			/*
 			 * Set OTP in current device session
 			 */
-			authSession.setAuthNote("code", code);
-			//TODO check TTL logic
-			authSession.setAuthNote("ttl", Long.toString(System.currentTimeMillis() + (ttl * 1000L)));			
+			authSession.setAuthNote("code", code);		
 			/*
 			 * Send OTP
 			 */
-			sendOTP(context, config, session, user, mobileNumber, ttl, code);
+			sendOTP(context, code);
 			
 		}catch(NumberFormatException e) {
 			LOG.error(String.format("Unable to parse length<%s> or ttl<%s> for the Authentication Flow",config.getConfig().get("length"),config.getConfig().get("ttl")));
@@ -139,23 +128,50 @@ public class SmsAuthenticator implements Authenticator{
 		}
 	}
 
-	private void sendOTP(AuthenticationFlowContext context, AuthenticatorConfigModel config, KeycloakSession session,
-			UserModel user, String mobileNumber, int ttl, String code) {		
-		try {
+	/**
+	 * Method to Send OTP via both SMS and EMail
+	 * @param context AuthenticationFlowContext
+	 * @param code OTP code
+	 */
+	private void sendOTP(AuthenticationFlowContext context, String code) {	
+		AuthenticatorConfigModel config=context.getAuthenticatorConfig();
+		KeycloakSession session=context.getSession();
+		UserModel user=context.getUser();
+		/*
+		 * ttl: Time to Live of OTP to be generated
+		 */
+		int ttl = Integer.parseInt(config.getConfig().get("ttl"));		
+		
+		try {			
 			/*
 			 * SMS OTP Send
 			 */
+			String mobileNumber="";
+			/**
+			 * Fetch mobile no from User attribute of Keycloak
+			 */
+			mobileNumber = user.getFirstAttribute(Constants.ATTRIB_MOB_NUM);		
+			if (mobileNumber == null || mobileNumber.isBlank()) {
+				String errorString = String.format(
+						"'%s' attribute for the user <%s>is blank or not present. Please set it.", Constants.ATTRIB_MOB_NUM,
+						user.getUsername());
+				LOG.error(errorString);
+			}
+			
 			if(mobileNumber!=null) {
 				Theme theme = session.theme().getTheme(Theme.Type.LOGIN);
 				Locale locale = session.getContext().resolveLocale(user);
 				String smsAuthText = theme.getMessages(locale).getProperty("smsAuthText");
 				String smsText = String.format(smsAuthText, code, Math.floorDiv(ttl, 60));
+				
 				SmsServiceFactory.get(config.getConfig()).send(mobileNumber, smsText);
 			}			
 			/*
 			 * Email OTP Send
 			 */
 			sendEmailWithCode(session, context.getRealm(), user, code);
+			
+			context.getAuthenticationSession().setAuthNote("ttl", Long.toString(System.currentTimeMillis() + (ttl * 1000L)));	
 			
 			context.challenge(context.form().setAttribute(CONST_REALM, context.getRealm()).createForm(TPL_CODE));
 		} catch (Exception e) {
@@ -170,8 +186,9 @@ public class SmsAuthenticator implements Authenticator{
 	public void action(AuthenticationFlowContext context) {		
 		MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
         if (formData.containsKey("resend")) {
-        	sendEmailWithCode(context.getSession(), context.getRealm(), context.getUser(), context.getAuthenticationSession().getAuthNote("code"));
-        	LOG.info("Resending OTP");
+        	//TODO: Disable/check for abuse of resend OTP feature
+        	sendOTP(context, context.getAuthenticationSession().getAuthNote("code"));
+        	LOG.info(String.format("Resending OTP for user <%s>",context.getUser().getUsername()));
         	context.challenge(context.form().setAttribute(CONST_REALM, context.getRealm()).createForm(TPL_CODE));
             return;
         }
@@ -207,7 +224,7 @@ public class SmsAuthenticator implements Authenticator{
 			}
 		} else {
 			// OTP is invalid
-			LOG.error(String.format("OTP validation failed. Entered OTP <%s> does not match with required OTP ,%s>",enteredCode,code));
+			LOG.error(String.format("OTP validation failed for user ,<%s>. Entered OTP <%s> does not match with required OTP <%s>",context.getUser().getUsername(),enteredCode,code));
 			AuthenticationExecutionModel execution = context.getExecution();
 			if (execution.isRequired()) {
 				context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS,
@@ -224,7 +241,11 @@ public class SmsAuthenticator implements Authenticator{
 		context.getAuthenticationSession().removeAuthNote("ttl");
 	}
 
-	
+	/**
+	 * Checks if cookie is present and is for the current user
+	 * @param context AuthenticationFlowContext
+	 * @return boolean. True if Cookie is Present else False
+	 */
 	private boolean hasCookie(AuthenticationFlowContext context) {
         Cookie cookie = context.getHttpRequest().getHttpHeaders().getCookies().get(Constants.COOKIE_2FA_ANSWERED);
         if(cookie!=null) {
@@ -238,6 +259,10 @@ public class SmsAuthenticator implements Authenticator{
         return false;
     }
 	
+	/**
+	 * Sets an Encrypted Cookie for the user.
+	 * @param context AuthenticationFlowContext
+	 */
 	private void setCookie(AuthenticationFlowContext context) {
 		if(!Boolean.parseBoolean(context.getAuthenticatorConfig().getConfig().get(Constants.ATTRIB_2FA_COOKIE))) {
 			return;
@@ -254,19 +279,32 @@ public class SmsAuthenticator implements Authenticator{
                 false, true);
     }
 	
+	/**
+	 * Returns an Encrypted String for the User logged in
+	 * @param context
+	 * @return String
+	 */
 	private String getEncryptedCookieString(AuthenticationFlowContext context) {
-        String userAgentId = getUserAgentId(context);
-        return encryptToken(context, userAgentId);
+        return encryptToken(context, getUserAgentId(context));
 	}
 
-	
+	/**
+	 * Encrypts String passed
+	 * @param context AuthenticationFlowContext
+	 * @param value String to be encrypted
+	 * @return String. Encrypted String
+	 */
 	private String encryptToken(AuthenticationFlowContext context, String value){
 		String algorithm = context.getSession().tokens().signatureAlgorithm(TokenCategory.INTERNAL);
-		SignatureSignerContext signer = context.getSession().getProvider(SignatureProvider.class, algorithm).signer();
-		
+		SignatureSignerContext signer = context.getSession().getProvider(SignatureProvider.class, algorithm).signer();		
         return new JWSBuilder().jsonContent(value).sign(signer);
     }
 	
+	/**
+	 * Fetches user agent from HTTP headers and appends it to username.
+	 * @param context AuthenticationFlowContext
+	 * @return String
+	 */
 	private String getUserAgentId(AuthenticationFlowContext context){
         MultivaluedMap<String, String> headers = context.getHttpRequest().getHttpHeaders().getRequestHeaders();
         String username = context.getUser().getUsername();
@@ -274,6 +312,17 @@ public class SmsAuthenticator implements Authenticator{
         return username + "_" +userAgent;
     }
 	
+	/**
+	 * Creates and adds a cookie to HTTP headers
+	 * @param name Name of Cookie
+	 * @param value Value of the Cookie
+	 * @param path
+	 * @param domain
+	 * @param comment
+	 * @param maxAge Validity of cookie
+	 * @param secure
+	 * @param httpOnly
+	 */
 	private static void addCookie(String name, String value, String path, String domain, String comment, int maxAge, boolean secure, boolean httpOnly) {
         HttpResponse response= ResteasyProviderFactory.getInstance().getContextData(HttpResponse.class);
         StringBuffer cookieBuf = new StringBuffer();
@@ -282,6 +331,13 @@ public class SmsAuthenticator implements Authenticator{
         response.getOutputHeaders().add(HttpHeaders.SET_COOKIE, cookie);
     }
 	
+	/**
+	 * Method sends Email with OTP
+	 * @param session KeycloakSession
+	 * @param realm Realm of the user
+	 * @param user User
+	 * @param code OTP code to be sent
+	 */
 	private void sendEmailWithCode(KeycloakSession session,RealmModel realm, UserModel user, String code) {
         if (user.getEmail() == null) {
             LOG.warnf("Could not send access code email due to missing email. realm=%s user=%s", realm.getId(), user.getUsername());
