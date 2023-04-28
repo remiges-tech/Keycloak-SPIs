@@ -78,14 +78,15 @@ public class ClientIPValidator implements Authenticator {
 		/*
 		 * Find IP address with and without Proxy
 		 */
-		String ipWithoutProxy = context.getHttpRequest().getRemoteAddress();
-		String ipWithProxy = context.getHttpRequest().getHttpHeaders().getHeaderString("X-Forwarded-For");
-
+		String reqIpAddress=context.getHttpRequest().getHttpHeaders().getHeaderString("X-Forwarded-For");
+		if(reqIpAddress==null|| reqIpAddress.isBlank()) {
+			reqIpAddress=context.getHttpRequest().getRemoteAddress();
+		}
 		/*
 		 * Check if IP whitelist Validation is required.
 		 */
 		if (Boolean.parseBoolean(config.getConfig().getOrDefault("IP Validation", "true"))) {
-			if (!ipWhitelistCheck(context, ipWithoutProxy, ipWithProxy)) {
+			if (!ipWhitelistCheck(context, reqIpAddress)) {
 				return;
 			}
 		} else {
@@ -95,7 +96,7 @@ public class ClientIPValidator implements Authenticator {
 		 * Check if GEO IP validation is to be performed
 		 */
 		if (Boolean.parseBoolean(config.getConfig().getOrDefault("Geo IP Validation", "true"))) {
-			if (!geoIpCheck(context, ipWithoutProxy, ipWithProxy)) {
+			if (!geoIpCheck(context, reqIpAddress)) {
 				return;
 			}
 		} else {
@@ -113,25 +114,22 @@ public class ClientIPValidator implements Authenticator {
 	 * @param kcUser
 	 * @return true if Geo location check passes. Else false
 	 */
-	private boolean geoIpCheck(AuthenticationFlowContext context, String ipWithoutProxy, String ipWithProxy) {
-		String countryIsoWithProxy = "";
-		String countryIsoWithoutProxy = "";
+	private boolean geoIpCheck(AuthenticationFlowContext context, String reqIpAddress) {
+		String countryIso = "";
 		/*
 		 * 1. Find Geo Location of the IP
 		 */
 		try {
-			if (ipWithProxy != null) {
-				countryIsoWithProxy = GeoIp2Util.getGeoIp2Util().getIsoCountry(ipWithProxy);
+			if (reqIpAddress != null) {
+				countryIso = GeoIp2Util.getGeoIp2Util().getIsoCountry(reqIpAddress);
 			}
-			if (ipWithoutProxy != null) {
-				countryIsoWithoutProxy = GeoIp2Util.getGeoIp2Util().getIsoCountry(ipWithoutProxy);
-			}
+			
 		} catch (IOException | GeoIp2Exception e) {
 			LOG.error("Exception while reading GeoIP list:" + e.getLocalizedMessage());
 			LOG.error(e);
 			context.failureChallenge(AuthenticationFlowError.INTERNAL_ERROR,
 					context.form().setError(
-							String.format("GeoIP Database Error for your IP <%s>/<%s>", ipWithoutProxy, ipWithProxy))
+							String.format("GeoIP Database Error for your IP <%s>", reqIpAddress))
 							.createErrorPage(Response.Status.INTERNAL_SERVER_ERROR));
 			return false;
 		}
@@ -140,25 +138,23 @@ public class ClientIPValidator implements Authenticator {
 		 */
 		String allowedGeoLocation = AttributesReader.fetchGeoLocationFromConfig(context,LOG);
 		
-		LOG.warn(String.format("CountryofIP<%s>/<%s>|| allowedCountry<%s>", countryIsoWithoutProxy, countryIsoWithProxy,
-				allowedGeoLocation));
+		LOG.warn(String.format("CountryofIP <%s> is <%s>|| allowedCountry <%s>", reqIpAddress, countryIso, allowedGeoLocation));
 
 		/*
 		 * 3. Validate Geo location of IP against allowed Geo Location
 		 */
 		if (allowedGeoLocation.isBlank()) {
-			LOG.info(
-					"Geo Location for user <%s> is not set at User and Client level. Hence skipping Geo Location Check");
+			LOG.info("Geo Location for user <%s> is not set at User and Client level. Hence skipping Geo Location Check");
 			return true;
-		} else {			
-			if (allowedGeoLocation.equals(countryIsoWithoutProxy) || allowedGeoLocation.equals(countryIsoWithProxy)) {
-				LOG.info("GeoIP2 validation success");
+		} else {
+			if (allowedGeoLocation.equals(countryIso)) {
+				LOG.debug("GeoIP2 validation success");
 				context.success();
 				return true;
 			} else {
 				String err = String.format(
-						"Your IP Address <%s>/<%s> belongs to <%s>/<%s> is not part of whitelisted Geo Location<%s> for you, therefore access is denied",
-						ipWithoutProxy, ipWithProxy, countryIsoWithProxy, countryIsoWithoutProxy, allowedGeoLocation);
+						"Your IP Address <%s> belongs to <%s> is not part of whitelisted Geo Location<%s> for you, therefore access is denied",
+						reqIpAddress, countryIso, allowedGeoLocation);
 				LOG.error(err);
 				context.failureChallenge(AuthenticationFlowError.INTERNAL_ERROR,
 						context.form().setError(err).createErrorPage(Response.Status.INTERNAL_SERVER_ERROR));
@@ -176,28 +172,27 @@ public class ClientIPValidator implements Authenticator {
 	 * @param ipWithProxy
 	 * @return
 	 */
-	private boolean ipWhitelistCheck(AuthenticationFlowContext context, String ipWithoutProxy, String ipWithProxy) {
+	private boolean ipWhitelistCheck(AuthenticationFlowContext context, String reqIpAddress) {
 		/*
 		 * 1. Get IP against white list
 		 */
 		String ipWhiteList = AttributesReader.fetchIpWhitelistFromConfig(context, LOG);
 		
 		// TODO: Change logging to debug
-		LOG.info(String.format("IP Address <%s> or <%s> || whitelist <%s>", ipWithoutProxy, ipWithProxy, ipWhiteList));
+		LOG.info(String.format("IP Address <%s> || whitelist <%s>", reqIpAddress, ipWhiteList));
 
 		/*
 		 * 2. Check IP against white list
 		 */
 		if (!ipWhiteList.isBlank()) {
-			if (!(IpRangeCheckUtil.checkIP(ipWhiteList, ipWithoutProxy)
-					|| IpRangeCheckUtil.checkIP(ipWhiteList, ipWithProxy))) {
-				LOG.error(String.format("IP Address <%s> or <%s> is not part of whitelist, therefore access is denied",
-						ipWithoutProxy, ipWithProxy));
+			if (!(IpRangeCheckUtil.checkIP(ipWhiteList, reqIpAddress))) {
+				LOG.error(String.format("IP Address <%s> is not part of whitelist, therefore access is denied",
+						reqIpAddress));
 
 				context.failureChallenge(AuthenticationFlowError.INTERNAL_ERROR,
 						context.form().setError(String.format(
-								"Your IP Address <%s> or <%s> is not part of whitelist, therefore access is denied",
-								ipWithoutProxy, ipWithProxy)).createErrorPage(Response.Status.INTERNAL_SERVER_ERROR));
+								"Your IP Address <%s> is not part of whitelist, therefore access is denied",
+								reqIpAddress)).createErrorPage(Response.Status.INTERNAL_SERVER_ERROR));
 				return false;
 			} else {
 				LOG.info("IP validation success");
