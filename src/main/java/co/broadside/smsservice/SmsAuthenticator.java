@@ -30,10 +30,7 @@ import org.keycloak.theme.Theme;
 
 import co.broadside.Constants;
 import co.broadside.smsservice.smsgateway.SmsServiceFactory;
-import javax.ws.rs.core.Cookie;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.*;
 import java.net.URI;
 
 /**
@@ -325,7 +322,7 @@ public class SmsAuthenticator implements Authenticator{
 	 */
 	private static void addCookie(String name, String value, String path, String domain, String comment, int maxAge, boolean secure, boolean httpOnly) {
         HttpResponse response= ResteasyProviderFactory.getInstance().getContextData(HttpResponse.class);
-        StringBuffer cookieBuf = new StringBuffer();
+        StringBuilder cookieBuf = new StringBuilder();
         ServerCookie.appendCookieValue(cookieBuf, 1, name, value, path, domain, comment, maxAge, secure, httpOnly, null);
         String cookie = cookieBuf.toString();
         response.getOutputHeaders().add(HttpHeaders.SET_COOKIE, cookie);

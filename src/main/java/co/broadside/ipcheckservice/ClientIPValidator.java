@@ -1,7 +1,7 @@
 package co.broadside.ipcheckservice;
 
 import java.io.IOException;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.*;
 
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
@@ -78,9 +78,10 @@ public class ClientIPValidator implements Authenticator {
 		/*
 		 * Find IP address with and without Proxy
 		 */
-		String reqIpAddress=context.getHttpRequest().getHttpHeaders().getHeaderString("X-Forwarded-For");
+		LOG.debug("getRemoteAddr():"+context.getConnection().getRemoteAddr()+"|||getLocalAddr():"+context.getConnection().getLocalAddr());
+		String reqIpAddress=context.getConnection().getRemoteAddr();
 		if(reqIpAddress==null|| reqIpAddress.isBlank()) {
-			reqIpAddress=context.getHttpRequest().getRemoteAddress();
+			reqIpAddress=context.getConnection().getLocalAddr();
 		}
 		/*
 		 * Check if IP whitelist Validation is required.

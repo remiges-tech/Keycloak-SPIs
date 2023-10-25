@@ -1,5 +1,7 @@
 package co.broadside.ipcheckservice.util;
 
+import java.net.InetAddress;
+
 import org.jboss.logging.Logger;
 
 import inet.ipaddr.AddressStringException;
@@ -37,6 +39,14 @@ public class IpRangeCheckUtil {
 					}
 				} catch (AddressStringException e) {
 					LOG.error("Input IP ["+ipToBeValidated+"] is Invalid :: "+e.getLocalizedMessage());
+				}
+			}else if(ip.contains(":")) {
+				IPAddress loopback = new IPAddressString(ip).getAddress();
+				InetAddress inetAddress = loopback.toInetAddress();
+				String derivedIp=inetAddress.toString().split("/")[1];
+				LOG.debug("ipToBeValidated:["+ipToBeValidated+"]||derivedIp:["+derivedIp+"]||ipList:["+ip+"]");
+				if(ipToBeValidated.equals(derivedIp)) {
+					isValid=true;
 				}
 			}else if(ipToBeValidated.equals(ip)) {
 				isValid=true;

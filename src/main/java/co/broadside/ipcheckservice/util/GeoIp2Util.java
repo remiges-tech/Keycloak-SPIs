@@ -4,8 +4,12 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 
-import org.eclipse.microprofile.config.ConfigProvider;
+
 import org.jboss.logging.Logger;
+import org.keycloak.Config;
+import org.keycloak.Config.ConfigProvider;
+import org.keycloak.Config.Scope;
+import org.keycloak.Config.SystemPropertiesConfigProvider;
 
 import com.maxmind.db.CHMCache;
 import com.maxmind.geoip2.DatabaseReader;
@@ -43,8 +47,8 @@ public class GeoIp2Util {
 	 * @throws IOException : Throws exception if it is unable to open the geoip2 database
 	 */
 	private GeoIp2Util() throws IOException {
-		String geoIP2DB = ConfigProvider.getConfig().getConfigValue("kc.home.dir").getValue()
-				+ "/providers/GeoLite2-Country.mmdb";
+		//Config.ConfigProvider.
+		String geoIP2DB =System.getenv("KC_DIR")+"/providers/GeoLite2-Country.mmdb";
 		LOG.info("Geo IP2 DB Path::" + geoIP2DB);
 		database = new File(geoIP2DB);
 		reader = new DatabaseReader.Builder(database).withCache(new CHMCache()).build();
@@ -82,7 +86,7 @@ public class GeoIp2Util {
 		/*
 		 * Handle case for local host
 		 */
-		if (ip.trim().equals("127.0.0.1")) {
+		if (ip.trim().equals("127.0.0.1") || ip.trim().equals("0:0:0:0:0:0:0:1")) {
 			return "IN";
 		}
 		InetAddress ipAddress = InetAddress.getByName(ip);

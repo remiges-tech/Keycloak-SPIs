@@ -6,13 +6,14 @@
 
     <groupId>co.broadside</groupId>
     <artifactId>keycloak-broadside-spi</artifactId>
-    <version>1.0.1</version>
+    
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>11</maven.compiler.release>
-        <version.org.keycloak>20.0.3</version.org.keycloak>
+        <version.org.keycloak>22.0.4</version.org.keycloak>
         <version.org.jboss.logging>3.4.1.Final</version.org.jboss.logging>
     </properties>
+    <version>${version.org.keycloak}</version>
 
 
     <build>
@@ -103,6 +104,14 @@
 		    <artifactId>client</artifactId>
 		    <version>7.3.0</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/jakarta.ws.rs/jakarta.ws.rs-api -->
+		<dependency>
+		    <groupId>jakarta.ws.rs</groupId>
+		    <artifactId>jakarta.ws.rs-api</artifactId>
+		    <version>3.1.0</version>
+		</dependency>
+
+
 
     </dependencies>
 
