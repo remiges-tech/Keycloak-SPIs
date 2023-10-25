@@ -19,6 +19,8 @@ Certain external Libraries are to be included on KEYCOAK_HOME/providers director
 3. maxmind-db-3.0.0.jar : For Geo IP Validation
 4. GeoLite2-Country.mmdb : GeoIP country Database
 
+Need to create an Environment Variable "KC_DIR" which points to Keycloak Installation Directory. This Directory's path will be used to find "provider" directory. From this directory, "GeoLite2-Country.mmdb" file will be referred.
+
 
 ## Building the Module from scratch
 
